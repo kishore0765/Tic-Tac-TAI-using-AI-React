@@ -86,7 +86,7 @@ const App = () => {
       className='min-h-screen text-white flex flex-col items-center justify-center'
       // Set background image using inline styles
       style={{ 
-        backgroundImage: `url('public/bg-image.png')`,
+        backgroundImage: `url('/bg-image.png')`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
