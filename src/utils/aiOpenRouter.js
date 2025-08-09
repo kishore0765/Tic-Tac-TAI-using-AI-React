@@ -1,5 +1,11 @@
+// utils/aiOpenRouter.js
+
 export const getAIMoverFromOpenRouter = async (board) => {
-    console.log(import.meta.VITE_OPENROUTER_API_KEY)
+    // Access the API key from environment variables
+    const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
+
+    
+
     const systemPrompt = `
         You are a smart Tic Tac Toe AI is playing as "O".
 
@@ -9,7 +15,7 @@ export const getAIMoverFromOpenRouter = async (board) => {
         3. Otherwise : choose center > corners > sides.
 
         Only return ONE number (0-8). Do not explain.
-    `
+    `;
 
     const userPrompt = `
         Current board :${JSON.stringify(board)}
@@ -24,48 +30,47 @@ export const getAIMoverFromOpenRouter = async (board) => {
         null = empty 
 
         what is your move?
-    `
-
+    `;
 
     const getMoveFromClaude = async () => {
         const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
             method: 'POST',
             headers: {
-                Authorization: `Bearer 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`,
+                Authorization: `Bearer ${apiKey}`,
+                // --- Add these lines ---
+                "HTTP-Referer": `${window.location.hostname}`,
+                "X-Title": "Tic Tac TAI",
+                // ----------------------
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                model: "deepseek/deepseek-r1",
+                model: "openai/gpt-oss-20b:free",
                 temperature: 0.2,
                 messages: [
                     { role: 'system', content: systemPrompt },
                     { role: 'user', content: userPrompt }
                 ]
             })
-        })
-        console.log(response)
+        });
 
-        const data = await response.json();
-
-        console.log(data)
-
-        const text = data.choices?.[0]?.message?.content?.trim()
-
-        console.log(text)
-
-        const match = text.match(/\d+/);
-        return match ? parseInt(match[0], 10) : null;
-    }
-
-        try {
-            let move = await getMoveFromClaude();
-            return move;
-        
-        }catch (error) {
-            console.error("AI", error);
-            const preferredOrder = [4, 0, 2, 6, 8, 1, 3, 5, 7];
-            return preferredOrder.find(index => board[index] === null );
-
+        if (!response.ok) {
+            console.error("API request failed:", response.status, response.statusText);
+            throw new Error("API request failed");
         }
 
+        const data = await response.json();
+        const text = data.choices?.[0]?.message?.content?.trim();
+        const match = text.match(/\d+/);
+        return match ? parseInt(match[0], 10) : null;
+    };
+
+    try {
+        let move = await getMoveFromClaude();
+        return move;
+    } catch (error) {
+        console.error("AI move fetch failed, falling back to default logic:", error);
+        // Fallback logic if the API fails
+        const preferredOrder = [4, 0, 2, 6, 8, 1, 3, 5, 7];
+        return preferredOrder.find(index => board[index] === null);
     }
+};

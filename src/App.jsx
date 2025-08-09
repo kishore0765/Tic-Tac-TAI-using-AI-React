@@ -19,6 +19,9 @@ const App = () => {
   //Score tracking
   const [score, setScore] = useState({X:0, O:0});
 
+  // New state to track if the AI is thinking
+  const [isAiThinking, setIsAiThinking] = useState(false);
+
   //when a player clicks a square
   const handleClick = (i)=>{
 
@@ -38,6 +41,8 @@ const App = () => {
     const gameResult = checkWinner(board);
     if (gameResult.winner) {
       setWinner(gameResult.winner);
+      // Ensure "thinking" message is hidden when game ends
+      setIsAiThinking(false); 
       if (gameResult.winner !== 'Draw') {
         setScore((prev) => ({
           ...prev,
@@ -50,6 +55,8 @@ const App = () => {
 
     // If it's AI's turn and the game is not over
     if (!isPlayerTurn) {
+      // Set thinking to true when AI's turn starts
+      setIsAiThinking(true);
       const aiTurn = async () => {
         const move = await getAIMoverFromOpenRouter(board);
         if (move !== null && board[move] === null) {
@@ -58,6 +65,8 @@ const App = () => {
           setBoard(newBoard);
           setIsPlayerTurn(true);
         }
+        // Set thinking to false after AI has moved
+        setIsAiThinking(false);
       };
       const timeout = setTimeout(aiTurn, 600);
       return () => clearTimeout(timeout);
@@ -73,16 +82,42 @@ const App = () => {
 
 
   return (
-    <div className='min-h-screen bg-[#0f172A] text-white flex flex-col items-center justify-center'>
-      <h1 className='text-3xl font-bold mb-4'>Tic Tac TAI 🤖</h1>
+    <div 
+      className='min-h-screen text-white flex flex-col items-center justify-center'
+      // Set background image using inline styles
+      style={{ 
+        backgroundImage: `url('src/assets/bg-image.png')`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        
+      }}
+    >
+      <h1 className='text-3xl font-bold mb-4 bg-gradient-to-r from-[#38BDF8] to-[#F472B6] text-transparent bg-clip-text'>Tic Tac TAI</h1>
       <ScoreBoard score={score}/>
       <GameBoard board={board} handleClick={handleClick}/>
-      {winner && (
-        <div className='mt-4 text-xl'>
-          {winner === "Draw" ? "Its a draw" : `${winner} won!`}
+      
+      {/* Display AI thinking message */}
+      <div className="h-8 mt-4">
+        {isAiThinking && !winner && (
+            <div className='text-lg text-slate-400 italic bg-gradient-to-r from-[#38BDF8] to-[#F472B6] text-transparent bg-clip-text '>
+              AI is thinking...
+            </div>
+        )}
+      </div>
 
-          <button onClick={restartGame} className='ml-4 px-4 py-2 bg-blue text-black rounded hover:bg-blue-600 '>
-            Play Again
+      {winner && (
+        <div className=' text-xl flex items-center gap-5 font-bold'>
+          <span className={`
+            font-bold
+            ${winner === 'X' ? 'text-[#38BDF8]' : ''}
+            ${winner === 'O' ? 'text-[#F472B6]' : ''}
+          `}>
+            {winner === "Draw" ? "It's a draw 🤝" : `${winner} Won 🏆`}
+          </span>
+
+          <button onClick={restartGame} className='ml-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700 transition-colors'>
+            Play Again 🖖
           </button>
         </div>
       )}
